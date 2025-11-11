@@ -79,7 +79,14 @@ def crawl():
                 continue
                 
             pages_crawled += 1
-            text_content = soup.get_text(separator=' ', strip=True)
+            main_content = soup.find('div', class_='mw-content-ltr mw-parser-output')
+
+            if not main_content:
+                print(f" SKIPPING: could not find main content div")
+                pages_crawled -= 1 
+                continue
+
+            text_content = main_content.get_text(separator=' ', strip=True)
             
             links = set()
             
