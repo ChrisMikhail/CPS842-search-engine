@@ -40,7 +40,7 @@ export default function HomePage() {
             <Hammer className="w-10 h-10" />
           </div>
           {/* <Logo className="size-100 m-0" /> */}
-          <h1 className="text-5xl font-semibold mb-3">CraftWiki</h1>
+          <h1 className="text-5xl font-semibold mb-3">MineFox</h1>
           <ModeToggle />
         </div>
 
@@ -49,7 +49,7 @@ export default function HomePage() {
           <InputGroupTextarea
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask anything"
+            placeholder="Search crafting recipes"
             rows={1}
             className="w-full text-base rounded-2xl focus:outline-none resize-none p-9 "
             onKeyDown={handleKeyDown}
