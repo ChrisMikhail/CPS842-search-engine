@@ -49,7 +49,7 @@ export default function HomePage() {
           <InputGroupTextarea
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask Claude anything..."
+            placeholder="Ask anything"
             rows={1}
             className="w-full text-base rounded-2xl focus:outline-none resize-none p-9 "
             onKeyDown={handleKeyDown}
