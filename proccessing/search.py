@@ -80,13 +80,14 @@ def compute_tfidf_vectors( postings, N):
     return doc_vectors, doc_lengths
 
 
-def vector_space_search(query, dictionary, postings, documents, pagerank, w1=0.8, w2=0.2, use_stopwords=False, top_k=10):
+def vector_space_search(query, dictionary, postings, documents, pagerank, w1=0.9, w2=0.1, use_stopwords=False, top_k=10):
     stopwords = set()
     if use_stopwords:
         with open("common_words", "r", encoding="utf-8") as f:
             stopwords = set(w.strip().lower() for w in f.readlines())
 
     query_terms = preprocess(query, stopwords)
+        
     query_weights = defaultdict(float)
     N = len(documents)
 
@@ -104,7 +105,7 @@ def vector_space_search(query, dictionary, postings, documents, pagerank, w1=0.8
     for term, q_wt in query_weights.items():
         if term not in postings:
             continue
-        for doc_id in postings[term].items():
+        for doc_id, data in postings[term].items():
             if doc_id in doc_vectors:
                 d_wt = doc_vectors[doc_id].get(term, 0)
                 scores[doc_id] += q_wt * d_wt
@@ -117,7 +118,17 @@ def vector_space_search(query, dictionary, postings, documents, pagerank, w1=0.8
     final_scores = {}
     for doc_id, cos_score in scores.items():
         pr_score = pagerank.get(str(doc_id), pagerank.get(doc_id, 0))
-        final_scores[doc_id] = w1 * cos_score + w2 * pr_score
+        
+        # boost the score if terms from query appear in the url
+        url_boost = 0.0
+        doc = documents.get(int(doc_id))
+        if doc:
+            url_lower = doc['url'].lower()
+            query_terms_in_url = sum(1 for term in query_terms if term in url_lower)
+            if query_terms_in_url > 0:
+                url_boost = 0.5 * (query_terms_in_url / len(query_terms)) if len(query_terms) > 0 else 0
+        
+        final_scores[doc_id] = w1 * cos_score + w2 * pr_score + url_boost
 
     ranked_docs = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
 
@@ -138,9 +149,9 @@ def vector_space_search(query, dictionary, postings, documents, pagerank, w1=0.8
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Search documents using Vector Space Model + PageRank")
-    parser.add_argument("-topk", type=int, default=10, )
-    parser.add_argument("-w1", type=float, default=0.5)
-    parser.add_argument("-w2", type=float, default=0.5 )
+    parser.add_argument("-topk", type=int, default=15, )
+    parser.add_argument("-w1", type=float, default=0.9)
+    parser.add_argument("-w2", type=float, default=0.1 )
     args = parser.parse_args()
 
     dictionary, postings, documents, pagerank = load_index()
