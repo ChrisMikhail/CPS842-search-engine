@@ -105,14 +105,14 @@ def crawl():
                         url_queue.append(new_url)
             
             page_data = {
-                "id": pages_crawled,
+                "id": pages_crawled - 1,
                 "url": current_url,
                 "content": text_content,
                 "links": list(links)
             }
             
             collection_data.append(page_data)
-            print(f" SUCCESS: added to collection (ID: {pages_crawled}), found {len(links)} links")
+            print(f" SUCCESS: added to collection (ID: {pages_crawled - 1}), found {len(links)} links")
 
         except requests.RequestException as e:
             print(f" ERROR: could not fetch {current_url}. reason: {e}")
