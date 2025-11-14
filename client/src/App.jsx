@@ -5,13 +5,13 @@ import { SidebarProvider } from './components/ui/sidebar';
 import AppSidebar from './components/AppSidebar';
 import { useState } from 'react';
 import { Outlet } from 'react-router';
-import { SearchHistoryProvider } from './hooks/context/SearchHistoryContext';
+import { SearchProvider } from './hooks/context/SearchContext';
 import AppHeader from './components/AppHeader';
 
 function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      <SearchHistoryProvider>
+      <SearchProvider>
         <SidebarProvider>
           <AppSidebar />
           <main className="w-screen h-screen flex flex-col">
@@ -19,7 +19,7 @@ function App() {
             <Outlet />
           </main>
         </SidebarProvider>
-      </SearchHistoryProvider>
+      </SearchProvider>
     </ThemeProvider>
   );
 }

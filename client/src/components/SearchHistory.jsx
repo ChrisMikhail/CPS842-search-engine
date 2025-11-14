@@ -6,11 +6,11 @@ import {
   SidebarMenuItem,
 } from './ui/sidebar';
 import { NavLink } from 'react-router';
-import { useSearchHistory } from '@/hooks/context/SearchHistoryContext';
+import { useSearch } from '@/hooks/context/SearchContext';
 import { ScrollArea, ScrollBar } from './ui/scroll-area';
 
 export default function SearchHistory() {
-  const { allQueries } = useSearchHistory();
+  const { allQueries } = useSearch();
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden mt-auto">

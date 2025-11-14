@@ -7,35 +7,12 @@ import {
 } from './ui/input-group';
 import { ModeToggle } from './ui/mode-toggle';
 import Logo from './Logo';
-import { useSearchHistory } from '@/hooks/context/SearchHistoryContext';
-import { searchQuery } from '@/lib/api';
+import { useSearch } from '@/hooks/context/SearchContext';
+import { NavLink, useNavigate } from 'react-router';
+import SearchBar from './SearchBar';
 
+//TODO: add a clear button (X)
 export default function HomePage() {
-  const { setAllQueries } = useSearchHistory();
-  const [query, setQuery] = useState('');
-
-  const handleSubmit = () => {
-    if (query.trim()) {
-      console.log('Searching:', query);
-      // Handle search submission
-      try {
-        const { results } = searchQuery(query);
-        console.log(results);
-      } catch (error) {
-        console.log(error);
-      }
-      setAllQueries((prev) => [...prev, query]);
-      setQuery('');
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
   return (
     <div className=" h-full w-full flex flex-col items-center justify-center ">
       {/* Main Content */}
@@ -44,7 +21,8 @@ export default function HomePage() {
       </div>
 
       {/* Search Input */}
-      <InputGroup className="w-full max-w-3xl">
+      <SearchBar />
+      {/* <InputGroup className="w-full max-w-3xl">
         <InputGroupTextarea
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -53,15 +31,18 @@ export default function HomePage() {
           className="w-full text-base rounded-2xl focus:outline-none resize-none p-9 "
           onKeyDown={handleKeyDown}
         />
+
         <InputGroupButton
           onClick={handleSubmit}
           disabled={!query.trim()}
           className="absolute right-2 bottom-2 w-10 h-10 rounded-full flex items-center justify-center border-2 disabled:opacity-30 disabled:cursor-not-allowed hover:cursor-pointer bg-amber-400 hover:bg-amber-700  dark:hover:bg-amber-700"
         >
-          <ArrowUp className="w-5 h-5 text-secondary" />
-          <span className="sr-only">Send</span>
+          <NavLink to={`/${query}`}>
+            <ArrowUp className="w-5 h-5 text-secondary" />
+            <span className="sr-only">Send</span>
+          </NavLink>
         </InputGroupButton>
-      </InputGroup>
+      </InputGroup> */}
       {/* </main> */}
     </div>
   );

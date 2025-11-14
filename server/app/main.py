@@ -12,6 +12,7 @@ app.add_middleware(
 )
 
 class QueryResult(BaseModel):
+    title: str
     link: str
     score: int
     snippet: str
@@ -22,7 +23,8 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.post("/search")
-async def process_queries(q = None) -> list[QueryResult]:
-    results = [QueryResult(link=".....", score = 1, snippet = "testing this snippet right now")]
+@app.get("/search")
+async def process_queries(q:str | None = None) -> list[QueryResult]:
+    print(q)
+    results = [QueryResult(title="Lionel Messi", link="https://www.transfermarkt.us/lionel-messi/profil/spieler/28003", score = 1, snippet = "testing this snippet right now"),QueryResult(title="Cristiano Ronaldo", link="https://www.transfermarkt.us/cristiano-ronaldo/profil/spieler/8198", score = 1, snippet = "testing this snippet right now"), ]
     return results
