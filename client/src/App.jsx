@@ -15,7 +15,7 @@ function App() {
         <SidebarProvider>
           <AppSidebar />
           <main className="w-screen h-screen flex flex-col">
-            <AppHeader />
+            {/* <AppHeader /> */}
             <Outlet />
           </main>
         </SidebarProvider>

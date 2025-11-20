@@ -13,9 +13,12 @@ app.add_middleware(
 
 class QueryResult(BaseModel):
     title: str
+    site_name: str
     link: str
+    link_icon: str
     score: int
     snippet: str
+    positions: list[int]| None = None
 
 
 @app.get("/")
@@ -26,5 +29,9 @@ def read_root():
 @app.get("/search")
 async def process_queries(q:str | None = None) -> list[QueryResult]:
     print(q)
-    results = [QueryResult(title="Lionel Messi", link="https://www.transfermarkt.us/lionel-messi/profil/spieler/28003", score = 1, snippet = "testing this snippet right now"),QueryResult(title="Cristiano Ronaldo", link="https://www.transfermarkt.us/cristiano-ronaldo/profil/spieler/8198", score = 1, snippet = "testing this snippet right now"), ]
+    results = [
+        QueryResult(title="Lionel Messi - Player profile 2025 | Transfermarkt", site_name="Transfermarkt", link="https://www.transfermarkt.us/lionel-messi/profil/spieler/28003", link_icon="https://img.a.transfermarkt.technology/portrait/big/28003-1740766555.jpg?lm=1", score = 1, snippet = "Testing Messi snippet here"),
+        QueryResult(title="Cristiano Ronaldo - Player profile 2025 | Transfermarkt", site_name="Transfermarkt", link="https://www.transfermarkt.us/cristiano-ronaldo/profil/spieler/8198", link_icon="https://img.a.transfermarkt.technology/portrait/big/28003-1740766555.jpg?lm=1", score = 1, snippet = "Testing Ronaldo snippet here"),
+        QueryResult(title="Neymar - Player profile 2025 | Transfermarkt", site_name="Transfermarkt", link="https://www.transfermarkt.us/neymar/profil/spieler/68290", link_icon="https://img.a.transfermarkt.technology/portrait/big/28003-1740766555.jpg?lm=1", score = 1, snippet = "Testing Neymar snippet here"),
+        ]
     return results

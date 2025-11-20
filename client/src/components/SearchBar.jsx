@@ -11,24 +11,26 @@ import { cn } from '@/lib/utils';
 
 export default function SearchBar({ className }) {
   const { query, setQuery, handleSubmit, handleKeyDown } = useSearch();
+
   return (
-    <InputGroup className="w-full max-w-3xl">
+    <InputGroup
+      className={cn(
+        'w-full max-w-3xl flex flex-row items-start p-2 gap-2',
+        className,
+      )}
+    >
       <InputGroupTextarea
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search crafting recipes"
-        rows={1}
-        className={cn(
-          'w-full text-base rounded-2xl focus:outline-none resize-none p-9',
-          className,
-        )}
+        className={'w-full p-0 min-h-10 text-lg'}
         onKeyDown={handleKeyDown}
       />
 
       <InputGroupButton
         onClick={handleSubmit}
         disabled={!query.trim()}
-        className="absolute right-2 bottom-2 w-10 h-10 rounded-full flex items-center justify-center border-2 disabled:opacity-30 disabled:cursor-not-allowed hover:cursor-pointer bg-amber-400 hover:bg-amber-700  dark:hover:bg-amber-700"
+        className="size-10 rounded-md flex items-center justify-center border disabled:opacity-30 disabled:cursor-not-allowed hover:cursor-pointer bg-amber-400 hover:bg-amber-700 dark:hover:bg-amber-700"
       >
         <NavLink to={`/${query}`}>
           <ArrowUp className="w-5 h-5 text-secondary" />

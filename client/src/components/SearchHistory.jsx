@@ -14,21 +14,20 @@ export default function SearchHistory() {
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden mt-auto">
-      {/* <ScrollArea> */}
-      {/* <ScrollBar /> */}
       <SidebarGroupLabel>Searches</SidebarGroupLabel>
-      <SidebarMenu>
-        {allQueries.map((query, index) => (
-          <SidebarMenuItem key={index}>
-            <SidebarMenuButton asChild>
-              <NavLink to={`/${index}`} title={query}>
-                {query}
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
-      </SidebarMenu>
-      {/* </ScrollArea> */}
+      <ScrollArea className="max-h-120">
+        <SidebarMenu>
+          {allQueries.map((query, index) => (
+            <SidebarMenuItem key={index}>
+              <SidebarMenuButton asChild>
+                <NavLink to={`/${index}`} title={query} className="truncate">
+                  {query}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </ScrollArea>
     </SidebarGroup>
   );
 }

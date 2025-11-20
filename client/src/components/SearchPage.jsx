@@ -1,25 +1,24 @@
 import { useSearch } from '@/hooks/context/SearchContext';
 import { Separator } from './ui/separator';
-import { Link } from 'react-router';
+import LinkHeader from './LinkHeader';
 import SearchBar from './SearchBar';
 
 export default function SearchPage() {
   const { results } = useSearch();
   return (
     <main className="w-full h-full p-5">
-      {/* <SearchBar className="h-1/2" /> */}
-      <h1 className="font-bold text-2xl">Results</h1>
-      <Separator className="mt-5" />
+      <SearchBar className="max-w-full" />
+      <Separator className="my-5" />
       <div className=" w-full h-full">
         {results.map((result, index) => (
-          <div className="" key={index}>
-            <a
-              href={result.link}
-              target="_blank"
-              className="text-lg font-semibold hover:underline text-blue-800"
-            >
-              {result.title}
-            </a>
+          <div className="mb-5" key={index}>
+            <LinkHeader
+              link={result.link}
+              linkIcon={result.link_icon}
+              title={result.title}
+              siteName={result.site_name}
+            />
+
             <p>{result.snippet}</p>
           </div>
         ))}
