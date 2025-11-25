@@ -19,12 +19,10 @@ def load_index():
                 term, df = parts
                 dictionary[term] = int(df)
 
-
     with open("postings.txt", "r", encoding="utf-8") as f:
         for line in f:
             term, json_data = line.split(":", 1)
             postings[term.strip()] = json.loads(json_data.strip())
-
 
     with open("../data/collection.json", "r", encoding="utf-8") as f:
         collections = json.load(f)
@@ -32,10 +30,12 @@ def load_index():
             doc_id = int(doc["id"])
             url = doc.get("url", "")
             content = doc.get("content", "")
+            title = doc.get("title", "")
             links = doc.get("links", [])
             documents[doc_id] = {
                 "url": url,
                 "content": content,
+                "title": title,
                 "links": links
             }
 
@@ -60,7 +60,7 @@ def preprocess(text, stopwords=None):
     return lemmatized
 
 
-def compute_tfidf_vectors( postings, N):
+def compute_tfidf_vectors(postings, N):
     doc_vectors = defaultdict(dict)
     doc_lengths = defaultdict(float)
 
@@ -80,6 +80,28 @@ def compute_tfidf_vectors( postings, N):
     return doc_vectors, doc_lengths
 
 
+def make_snippet(text, query_terms, window=40):
+    text_lower = text.lower()
+    positions = []
+
+    for term in query_terms:
+        idx = text_lower.find(term)
+        if idx != -1:
+            positions.append(idx)
+
+    if not positions:
+        snippet = text[:200]
+    else:
+        start = max(min(positions) - window, 0)
+        end = min(max(positions) + window, len(text))
+        snippet = text[start:end]
+
+    for term in query_terms:
+        snippet = re.sub(rf"(?i)({re.escape(term)})", r"**\1**", snippet)
+
+    return snippet + "..."
+
+
 def vector_space_search(query, dictionary, postings, documents, pagerank, w1=0.9, w2=0.1, use_stopwords=False, top_k=10):
     stopwords = set()
     if use_stopwords:
@@ -87,7 +109,6 @@ def vector_space_search(query, dictionary, postings, documents, pagerank, w1=0.9
             stopwords = set(w.strip().lower() for w in f.readlines())
 
     query_terms = preprocess(query, stopwords)
-        
     query_weights = defaultdict(float)
     N = len(documents)
 
@@ -99,7 +120,7 @@ def vector_space_search(query, dictionary, postings, documents, pagerank, w1=0.9
             query_weights[term] = (1 + math.log10(tf)) * idf
 
     query_length = math.sqrt(sum(w ** 2 for w in query_weights.values())) or 1.0
-    doc_vectors, doc_lengths = compute_tfidf_vectors( postings, N)
+    doc_vectors, doc_lengths = compute_tfidf_vectors(postings, N)
 
     scores = defaultdict(float)
     for term, q_wt in query_weights.items():
@@ -114,62 +135,55 @@ def vector_space_search(query, dictionary, postings, documents, pagerank, w1=0.9
         if doc_lengths[doc_id] > 0:
             scores[doc_id] /= (doc_lengths[doc_id] * query_length)
 
-
     final_scores = {}
     for doc_id, cos_score in scores.items():
         pr_score = pagerank.get(str(doc_id), pagerank.get(doc_id, 0))
-        
-        # boost the score if terms from query appear in the url
+
         url_boost = 0.0
         doc = documents.get(int(doc_id))
         if doc:
-            url_lower = doc['url'].lower()
-            query_terms_in_url = sum(1 for term in query_terms if term in url_lower)
-            if query_terms_in_url > 0:
-                url_boost = 0.5 * (query_terms_in_url / len(query_terms)) if len(query_terms) > 0 else 0
-        
+            url_lower = doc["url"].lower()
+            hits = sum(1 for t in query_terms if t in url_lower)
+            if hits > 0:
+                url_boost = 0.5 * (hits / len(query_terms))
+
         final_scores[doc_id] = w1 * cos_score + w2 * pr_score + url_boost
 
     ranked_docs = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
 
-    print(f"\nTop {len(ranked_docs)} results for query: \"{query}\" (w1={w1}, w2={w2})")
+    print(f"\nTop {len(ranked_docs)} results for query: \"{query}\"\n")
 
-    for rank, (doc_id, score) in enumerate(ranked_docs, start=1):
+    for doc_id, score in ranked_docs:
         doc = documents[int(doc_id)]
-        print(f"\nRank {rank}")
-        print(f"Doc ID: {doc_id}")
-        print(f"Score: {score:.4f}")
-        print(f"URL: {doc['url']}")
-        print(f"Content Preview: {doc['content'][:200]}...")
-        if doc["links"]:
-            print(f"Links: {', '.join(doc['links'][:3])}")
+        title = doc.get("title") or doc["content"][:60].split("\n")[0]
+        snippet = make_snippet(doc["content"], query_terms)
+
+        print(f"• Title: {title}")
+        print(f"• Link: {doc['url']}")
+        print(f"• Snippet: {snippet}\n")
 
     return ranked_docs
 
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Search documents using Vector Space Model + PageRank")
-    parser.add_argument("-topk", type=int, default=15, )
+    parser = argparse.ArgumentParser(description="Search documents via Vector Space Model")
+    parser.add_argument("--query", "-q", required=True, help="Search query")
+    parser.add_argument("-topk", type=int, default=15)
     parser.add_argument("-w1", type=float, default=0.9)
-    parser.add_argument("-w2", type=float, default=0.1 )
+    parser.add_argument("-w2", type=float, default=0.1)
     args = parser.parse_args()
 
     dictionary, postings, documents, pagerank = load_index()
-    print("Enter a query (type ZZEND to quit):")
 
-    while True:
-        term = input("> ").strip().lower()
-        if term == "zzend":
-            break
-
-        vector_space_search(
-            term,
-            dictionary,
-            postings,
-            documents,
-            pagerank,
-            w1=args.w1,
-            w2=args.w2,
-            use_stopwords=True,
-            top_k=args.topk,
-        )
+    vector_space_search(
+        args.query,
+        dictionary,
+        postings,
+        documents,
+        pagerank,
+        w1=args.w1,
+        w2=args.w2,
+        use_stopwords=True,
+        top_k=args.topk,
+    )
