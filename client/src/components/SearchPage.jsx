@@ -19,7 +19,7 @@ export default function SearchPage() {
               siteName={result.site_name}
             />
 
-            <p>{result.snippet}</p>
+            <p dangerouslySetInnerHTML={{ __html: result.snippet }} />
           </div>
         ))}
       </div>

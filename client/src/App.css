@@ -1,0 +1,26 @@
+/* Page background with dark gradient overlay */
+.app-bg {
+	position: relative;
+	background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('./assets/minecraft-cherry-blossom-biome.webp');
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	min-height: 100vh;
+	width: 100%;
+}
+
+.app-bg::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	/* extra subtle vignette */
+	background: radial-gradient(ellipse at center, rgba(0,0,0,0.15), rgba(0,0,0,0.45));
+	pointer-events: none;
+	z-index: 0;
+}
+
+.app-root {
+	position: relative;
+	z-index: 1;
+}
+

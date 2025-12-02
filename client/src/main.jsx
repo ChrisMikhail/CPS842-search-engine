@@ -11,7 +11,8 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Routes>
         <Route element={<App />}>
-          <Route path="/search" element={<HomePage />} />
+          <Route index element={<HomePage />} />
+          <Route path="search" element={<HomePage />} />
           <Route path=":searchId" element={<SearchPage />} />
         </Route>
       </Routes>

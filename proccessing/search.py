@@ -122,7 +122,7 @@ def make_snippet(text, query_terms, window_words=10):
 
     for term in query_terms:
         snippet_words = [
-            re.sub(rf"(?i)({re.escape(term)})", r"**\1**", w)
+            re.sub(rf"(?i)({re.escape(term)})", r"<strong>\1</strong>", w)
             for w in snippet_words
         ]
 
@@ -191,6 +191,85 @@ def vector_space_search(query, dictionary, postings, documents, pagerank, w1=0.9
 
     return ranked_docs
 
+
+
+def search_documents(query, topk=15, w1=0.9, w2=0.1):
+    """
+    Search documents and return structured results for API consumption.
+    
+    Args:
+        query: Search query string
+        topk: Number of top results to return
+        w1: Weight for cosine similarity score
+        w2: Weight for PageRank score
+    
+    Returns:
+        List of dicts with keys: id, url, title, snippet, score
+    """
+    dictionary, postings, documents, pagerank = load_index()
+    
+    stopwords = set()
+    with open("common_words", "r", encoding="utf-8") as f:
+        stopwords = set(w.strip().lower() for w in f.readlines())
+
+    query_terms = preprocess(query, stopwords)
+    query_weights = defaultdict(float)
+    N = len(documents)
+
+    for term in query_terms:
+        if term in dictionary:
+            df = dictionary[term]
+            idf = math.log10(N / df) if df != 0 else 0
+            tf = query_terms.count(term)
+            query_weights[term] = (1 + math.log10(tf)) * idf
+
+    query_length = math.sqrt(sum(w ** 2 for w in query_weights.values())) or 1.0
+    doc_vectors, doc_lengths = compute_tfidf_vectors(postings, N)
+
+    scores = defaultdict(float)
+    for term, q_wt in query_weights.items():
+        if term not in postings:
+            continue
+        for doc_id, data in postings[term].items():
+            if doc_id in doc_vectors:
+                d_wt = doc_vectors[doc_id].get(term, 0)
+                scores[doc_id] += q_wt * d_wt
+
+    for doc_id in scores:
+        if doc_lengths[doc_id] > 0:
+            scores[doc_id] /= (doc_lengths[doc_id] * query_length)
+
+    final_scores = {}
+    for doc_id, cos_score in scores.items():
+        pr_score = pagerank.get(str(doc_id), pagerank.get(doc_id, 0))
+
+        url_boost = 0.0
+        doc = documents.get(int(doc_id))
+        if doc:
+            url_lower = doc["url"].lower()
+            hits = sum(1 for t in query_terms if t in url_lower)
+            if hits > 0:
+                url_boost = 0.5 * (hits / len(query_terms))
+
+        final_scores[doc_id] = w1 * cos_score + w2 * pr_score + url_boost
+
+    ranked_docs = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)[:topk]
+
+    results = []
+    for doc_id, score in ranked_docs:
+        doc = documents[int(doc_id)]
+        title = doc.get("title") or doc["content"][:60].split("\n")[0]
+        snippet = make_snippet(doc["content"], query_terms)
+
+        results.append({
+            "id": int(doc_id),
+            "url": doc.get("url", ""),
+            "title": title,
+            "snippet": snippet,
+            "score": float(score),
+        })
+
+    return results
 
 
 if __name__ == "__main__":

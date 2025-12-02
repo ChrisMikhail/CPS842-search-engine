@@ -14,7 +14,7 @@ import SearchBar from './SearchBar';
 //TODO: add a clear button (X)
 export default function HomePage() {
   return (
-    <div className=" h-full w-full flex flex-col items-center justify-center ">
+    <div className="h-screen w-full flex flex-col items-center justify-center">
       <div className="text-center mb-12 flex flex-col gap-3 items-center">
         <Logo className={'text-5xl font-semibold mb-3'} />
       </div>

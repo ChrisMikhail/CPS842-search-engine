@@ -1,6 +1,18 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import sys
+import os
+import re
+from urllib.parse import urlparse
+
+processing_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../proccessing'))
+sys.path.insert(0, os.path.dirname(processing_path))
+
+os.chdir(processing_path)
+
+from proccessing.search import search_documents
+
 
 app = FastAPI()
 app.add_middleware(
@@ -16,7 +28,7 @@ class QueryResult(BaseModel):
     site_name: str
     link: str
     link_icon: str
-    score: int
+    score: float
     snippet: str
     positions: list[int]| None = None
 
@@ -27,11 +39,42 @@ def read_root():
 
 
 @app.get("/search")
-async def process_queries(q:str | None = None) -> list[QueryResult]:
-    print(q)
-    results = [
-        QueryResult(title="Lionel Messi - Player profile 2025 | Transfermarkt", site_name="Transfermarkt", link="https://www.transfermarkt.us/lionel-messi/profil/spieler/28003", link_icon="https://img.a.transfermarkt.technology/portrait/big/28003-1740766555.jpg?lm=1", score = 1, snippet = "Testing Messi snippet here"),
-        QueryResult(title="Cristiano Ronaldo - Player profile 2025 | Transfermarkt", site_name="Transfermarkt", link="https://www.transfermarkt.us/cristiano-ronaldo/profil/spieler/8198", link_icon="https://img.a.transfermarkt.technology/portrait/big/28003-1740766555.jpg?lm=1", score = 1, snippet = "Testing Ronaldo snippet here"),
-        QueryResult(title="Neymar - Player profile 2025 | Transfermarkt", site_name="Transfermarkt", link="https://www.transfermarkt.us/neymar/profil/spieler/68290", link_icon="https://img.a.transfermarkt.technology/portrait/big/28003-1740766555.jpg?lm=1", score = 1, snippet = "Testing Neymar snippet here"),
-        ]
-    return results
+async def process_queries(
+    q: str | None = None, 
+    topk: int = 15,
+    w1: float = 0.9,
+    w2: float = 0.1
+) -> list[QueryResult]:
+    
+    if not q:
+        raise HTTPException(status_code=400, detail="Query parameter 'q' is required")
+    
+    results = search_documents(q, topk=topk, w1=w1, w2=w2)
+    
+    query_results = []
+    for result in results:
+        from urllib.parse import urlparse
+        parsed_url = urlparse(result['url'])
+        site_name = parsed_url.netloc or "Unknown"
+        
+        # extract title from URL path, gets last segment after /
+        url_path = parsed_url.path.rstrip('/')
+        if '/' in url_path:
+            title = url_path.split('/')[-1]
+        else:
+            title = url_path or result['title']
+        title = title.replace('_', ' ').strip() + ' - Minecraft Wiki'
+        
+        snippet = result['snippet']
+        
+        query_results.append(QueryResult(
+            title=title,
+            site_name=site_name,
+            link=result['url'],
+            link_icon=f"https://www.google.com/s2/favicons?domain={parsed_url.netloc}",
+            score=round(result['score'], 4),
+            snippet=snippet,
+            positions=None
+        ))
+    
+    return query_results
