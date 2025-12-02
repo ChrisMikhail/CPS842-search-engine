@@ -80,27 +80,54 @@ def compute_tfidf_vectors(postings, N):
     return doc_vectors, doc_lengths
 
 
-def make_snippet(text, query_terms, window=40):
+def make_snippet(text, query_terms, window_words=10):
     text_lower = text.lower()
-    positions = []
+
+
+    first_pos = None
+    first_term = None
 
     for term in query_terms:
         idx = text_lower.find(term)
-        if idx != -1:
-            positions.append(idx)
+        if idx != -1 and (first_pos is None or idx < first_pos):
+            first_pos = idx
+            first_term = term
 
-    if not positions:
+
+    if first_pos is None:
         snippet = text[:200]
-    else:
-        start = max(min(positions) - window, 0)
-        end = min(max(positions) + window, len(text))
-        snippet = text[start:end]
+        return snippet + "..."
+
+
+    words = text.split()
+    words_lower = [w.lower() for w in words]
+
+
+    match_index = None
+    for i, w in enumerate(words_lower):
+        if first_term in w:
+            match_index = i
+            break
+
+    if match_index is None:
+        snippet = text[:200]
+        return snippet + "..."
+
+
+    start = max(match_index - window_words, 0)
+    end = min(match_index + window_words + 1, len(words))
+
+    snippet_words = words[start:end]
+
 
     for term in query_terms:
-        snippet = re.sub(rf"(?i)({re.escape(term)})", r"**\1**", snippet)
+        snippet_words = [
+            re.sub(rf"(?i)({re.escape(term)})", r"**\1**", w)
+            for w in snippet_words
+        ]
 
+    snippet = " ".join(snippet_words)
     return snippet + "..."
-
 
 def vector_space_search(query, dictionary, postings, documents, pagerank, w1=0.9, w2=0.1, use_stopwords=False, top_k=10):
     stopwords = set()
