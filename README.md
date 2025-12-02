@@ -7,6 +7,6 @@ Frontend:
 
 Backend:
 
-- cd server
 - source .venv/bin/activate
-- fastapi dev main.py
+- pip install -r requirements.txt
+- fastapi dev server/app/main.py
