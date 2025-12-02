@@ -126,7 +126,7 @@ def vector_space_search(query, dictionary, postings, documents, pagerank, w1=0.9
     for term, q_wt in query_weights.items():
         if term not in postings:
             continue
-        for doc_id, data in postings[term].items():
+        for doc_id in postings[term].items():
             if doc_id in doc_vectors:
                 d_wt = doc_vectors[doc_id].get(term, 0)
                 scores[doc_id] += q_wt * d_wt
@@ -153,7 +153,7 @@ def vector_space_search(query, dictionary, postings, documents, pagerank, w1=0.9
 
     print(f"\nTop {len(ranked_docs)} results for query: \"{query}\"\n")
 
-    for doc_id, score in ranked_docs:
+    for doc_id in ranked_docs:
         doc = documents[int(doc_id)]
         title = doc.get("title") or doc["content"][:60].split("\n")[0]
         snippet = make_snippet(doc["content"], query_terms)
